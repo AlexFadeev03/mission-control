@@ -379,18 +379,28 @@ function skillNameFromSlug(slug: string): string {
   return parts[parts.length - 1]
 }
 
+function normalizeTargetRoot(targetRoot: string): string {
+  return targetRoot === 'openclaw' ? 'claude-code' : targetRoot
+}
+
 function getTargetDir(targetRoot: string): string {
   const home = homedir()
   const cwd = process.cwd()
   const claudeCodeState = config.claudeCodeStateDir || join(home, '.claude')
+  const claudeCodeWorkspace =
+    process.env.CLAUDE_CODE_WORKSPACE_DIR ||
+    process.env.OPENCLAW_WORKSPACE_DIR ||
+    process.env.MISSION_CONTROL_WORKSPACE_DIR ||
+    join(claudeCodeState, 'workspace')
   const rootMap: Record<string, string> = {
     'user-agents': process.env.MC_SKILLS_USER_AGENTS_DIR || join(home, '.agents', 'skills'),
     'user-codex': process.env.MC_SKILLS_USER_CODEX_DIR || join(home, '.codex', 'skills'),
     'project-agents': process.env.MC_SKILLS_PROJECT_AGENTS_DIR || join(cwd, '.agents', 'skills'),
     'project-codex': process.env.MC_SKILLS_PROJECT_CODEX_DIR || join(cwd, '.codex', 'skills'),
-    'claude-code': process.env.MC_SKILLS_CLAUDE_CODE_DIR || join(claudeCodeState, 'skills'),
+    'claude-code': process.env.MC_SKILLS_CLAUDE_CODE_DIR || process.env.MC_SKILLS_OPENCLAW_DIR || join(claudeCodeState, 'skills'),
+    'workspace': process.env.MC_SKILLS_WORKSPACE_DIR || join(claudeCodeWorkspace, 'skills'),
   }
-  const dir = rootMap[targetRoot]
+  const dir = rootMap[normalizeTargetRoot(targetRoot)]
   if (!dir) throw new Error(`Invalid target root: ${targetRoot}`)
   return dir
 }
@@ -417,7 +427,8 @@ export async function installFromRegistry(req: InstallRequest): Promise<InstallR
     return { ok: false, name, path: '', message: `Invalid skill name: ${name}` }
   }
 
-  const targetDir = getTargetDir(req.targetRoot)
+  const targetRoot = normalizeTargetRoot(req.targetRoot)
+  const targetDir = getTargetDir(targetRoot)
   const skillDir = resolveWithin(targetDir, name)
   const skillDocPath = resolveWithin(skillDir, 'SKILL.md')
 
@@ -499,7 +510,7 @@ export async function installFromRegistry(req: InstallRequest): Promise<InstallR
         updated_at = excluded.updated_at
     `).run(
       name,
-      req.targetRoot,
+      targetRoot,
       skillDir,
       desc ? (desc.length > 220 ? `${desc.slice(0, 217)}...` : desc) : null,
       hash,

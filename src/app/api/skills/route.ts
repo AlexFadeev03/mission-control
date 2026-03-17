@@ -7,6 +7,7 @@ import { homedir } from 'node:os'
 import { requireRole } from '@/lib/auth'
 import { resolveWithin } from '@/lib/paths'
 import { checkSkillSecurity } from '@/lib/skill-registry'
+import { config } from '@/lib/config'
 
 interface SkillSummary {
   id: string
@@ -19,6 +20,11 @@ interface SkillSummary {
 }
 
 type SkillRoot = { source: string; path: string }
+
+function canonicalSkillSource(sourceRaw: string | null | undefined): string {
+  const source = String(sourceRaw || '').trim()
+  return source === 'openclaw' ? 'claude-code' : source
+}
 
 function resolveSkillRoot(
   envName: string,
@@ -84,23 +90,33 @@ function getSkillRoots(): SkillRoot[] {
     { source: 'project-agents', path: resolveSkillRoot('MC_SKILLS_PROJECT_AGENTS_DIR', join(cwd, '.agents', 'skills')) },
     { source: 'project-codex', path: resolveSkillRoot('MC_SKILLS_PROJECT_CODEX_DIR', join(cwd, '.codex', 'skills')) },
   ]
-  // Add OpenClaw gateway skill roots when configured
-  const openclawState = process.env.OPENCLAW_STATE_DIR || process.env.OPENCLAW_HOME || join(home, '.openclaw')
-  const openclawSkills = resolveSkillRoot('MC_SKILLS_OPENCLAW_DIR', join(openclawState, 'skills'))
-  roots.push({ source: 'openclaw', path: openclawSkills })
+  const claudeCodeStateDir =
+    config.claudeCodeStateDir ||
+    process.env.CLAUDE_CODE_STATE_DIR ||
+    process.env.OPENCLAW_STATE_DIR ||
+    process.env.OPENCLAW_HOME ||
+    join(home, '.claude')
+  const claudeCodeSkills = resolveSkillRoot(
+    'MC_SKILLS_CLAUDE_CODE_DIR',
+    resolveSkillRoot('MC_SKILLS_OPENCLAW_DIR', join(claudeCodeStateDir, 'skills')),
+  )
+  roots.push({ source: 'claude-code', path: claudeCodeSkills })
 
-  // Add OpenClaw workspace-local skills (takes precedence when names conflict)
-  const workspaceDir = process.env.OPENCLAW_WORKSPACE_DIR || process.env.MISSION_CONTROL_WORKSPACE_DIR || join(openclawState, 'workspace')
+  const workspaceDir =
+    process.env.CLAUDE_CODE_WORKSPACE_DIR ||
+    process.env.OPENCLAW_WORKSPACE_DIR ||
+    process.env.MISSION_CONTROL_WORKSPACE_DIR ||
+    join(claudeCodeStateDir, 'workspace')
   const workspaceSkills = resolveSkillRoot('MC_SKILLS_WORKSPACE_DIR', join(workspaceDir, 'skills'))
   roots.push({ source: 'workspace', path: workspaceSkills })
 
   // Dynamic: scan for workspace-<agent> directories
   try {
     const { readdirSync, existsSync } = require('node:fs') as typeof import('node:fs')
-    const entries = readdirSync(openclawState) as string[]
+    const entries = readdirSync(claudeCodeStateDir) as string[]
     for (const entry of entries) {
       if (!entry.startsWith('workspace-')) continue
-      const skillsDir = join(openclawState, entry, 'skills')
+      const skillsDir = join(claudeCodeStateDir, entry, 'skills')
       if (existsSync(skillsDir)) {
         const agentName = entry.replace('workspace-', '')
         roots.push({ source: `workspace-${agentName}`, path: skillsDir })
@@ -121,7 +137,7 @@ function normalizeSkillName(raw: string): string | null {
 }
 
 function getRootBySource(roots: SkillRoot[], sourceRaw: string | null): SkillRoot | null {
-  const source = String(sourceRaw || '').trim()
+  const source = canonicalSkillSource(sourceRaw)
   if (!source) return null
   return roots.find((r) => r.source === source) || null
 }
@@ -189,9 +205,9 @@ function getSkillsFromDB(): SkillSummary[] | null {
     }>
     if (rows.length === 0) return null // DB empty — fall back to fs scan
     return rows.map(r => ({
-      id: `${r.source}:${r.name}`,
+      id: `${canonicalSkillSource(r.source)}:${r.name}`,
       name: r.name,
-      source: r.source,
+      source: canonicalSkillSource(r.source),
       path: r.path,
       description: r.description || undefined,
       registry_slug: r.registry_slug,
@@ -229,7 +245,7 @@ export async function GET(request: NextRequest) {
     const security = checkSkillSecurity(content)
 
     return NextResponse.json({
-      source,
+      source: root.source,
       name,
       skillPath,
       skillDocPath,
@@ -259,11 +275,12 @@ export async function GET(request: NextRequest) {
     try {
       const { getDatabase } = await import('@/lib/db')
       const db = getDatabase()
-      db.prepare('UPDATE skills SET security_status = ?, updated_at = ? WHERE source = ? AND name = ?')
-        .run(security.status, new Date().toISOString(), source, name)
+      const legacySource = root.source === 'claude-code' ? 'openclaw' : root.source
+      db.prepare('UPDATE skills SET security_status = ?, updated_at = ? WHERE source IN (?, ?) AND name = ?')
+        .run(security.status, new Date().toISOString(), root.source, legacySource, name)
     } catch { /* best-effort */ }
 
-    return NextResponse.json({ source, name, security })
+    return NextResponse.json({ source: root.source, name, security })
   }
 
   // Try DB-backed fast path first

@@ -27,7 +27,7 @@ export async function GET(request: NextRequest) {
       'list-units', '--type=service', '--plain', '--no-legend', '--no-pager',
     ], { encoding: 'utf-8', timeout: 3000 })
 
-    const gwLines = output.split('\n').filter(l => l.includes('openclaw') && l.includes('gateway'))
+    const gwLines = output.split('\n').filter(l => /(openclaw|claude-code)/.test(l) && l.includes('gateway'))
 
     for (const line of gwLines) {
       // e.g. "openclaw-gateway@quant.service loaded active running OpenClaw Gateway (quant)"
@@ -38,12 +38,12 @@ export async function GET(request: NextRequest) {
 
       // Extract user from service name
       let user = ''
-      const templateMatch = serviceName.match(/openclaw-gateway@(\w+)\.service/)
+      const templateMatch = serviceName.match(/(?:openclaw|claude-code)-gateway@([a-zA-Z0-9._-]+)\.service/)
       if (templateMatch) {
         user = templateMatch[1]
       } else {
         // Custom service name like "openclaw-leads-gateway.service"
-        const customMatch = serviceName.match(/openclaw-(\w+)-gateway\.service/)
+        const customMatch = serviceName.match(/(?:openclaw|claude-code)-([a-zA-Z0-9._-]+)-gateway\.service/)
         if (customMatch) user = customMatch[1]
       }
       if (!user) continue
@@ -51,10 +51,19 @@ export async function GET(request: NextRequest) {
       // Find the port by checking what openclaw-gateway processes are listening on
       let port = 0
       try {
-        const configPath = `/home/${user}/.openclaw/openclaw.json`
-        const raw = readFileSync(configPath, 'utf-8')
-        const config = JSON.parse(raw)
-        if (typeof config?.gateway?.port === 'number') port = config.gateway.port
+        for (const configPath of [
+          `/home/${user}/.claude/claude-code.json`,
+          `/home/${user}/.openclaw/openclaw.json`,
+        ]) {
+          try {
+            const raw = readFileSync(configPath, 'utf-8')
+            const config = JSON.parse(raw)
+            if (typeof config?.gateway?.port === 'number') {
+              port = config.gateway.port
+              break
+            }
+          } catch {}
+        }
       } catch {
         // Can't read config — try to detect from ss output
       }

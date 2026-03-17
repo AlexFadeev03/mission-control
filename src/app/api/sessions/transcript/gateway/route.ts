@@ -31,7 +31,7 @@ export async function GET(request: NextRequest) {
 
   const stateDir = config.claudeCodeStateDir
   if (!stateDir) {
-    return NextResponse.json({ messages: [], source: 'gateway', error: 'OPENCLAW_STATE_DIR not configured' })
+    return NextResponse.json({ messages: [], source: 'gateway', error: 'CLAUDE_CODE_STATE_DIR not configured' })
   }
 
   try {

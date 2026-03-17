@@ -965,7 +965,7 @@ export function CreateAgentModal({
         const errMsg = data.error || 'Failed to create agent'
         // Determine which step failed based on error message
         const failIdx =
-          /provision|openclaw/i.test(errMsg) ? steps.findIndex(s => s.label.includes('Provisioning')) :
+          /provision|openclaw|claude/i.test(errMsg) ? steps.findIndex(s => s.label.includes('Provisioning')) :
           /gateway/i.test(errMsg) ? steps.findIndex(s => s.label.includes('gateway')) :
           0
         const idx = failIdx >= 0 ? failIdx : 0
