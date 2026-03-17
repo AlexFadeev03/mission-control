@@ -95,9 +95,7 @@ export async function POST(request: Request) {
         auth.user.username,
         JSON.stringify({ level: status.level, healthy: status.healthy, issues: status.issues })
       )
-    } catch {
-      // Non-critical.
-    }
+    } catch {}
 
     return NextResponse.json({
       success: true,

@@ -1606,7 +1606,7 @@ export function ConfigTab({
 
       {config.openclawId && (
         <div className="text-xs text-muted-foreground">
-          OpenClaw ID: <span className="font-mono text-foreground">{config.openclawId}</span>
+          Claude Code ID: <span className="font-mono text-foreground">{config.openclawId}</span>
           {config.isDefault && <span className="ml-2 px-1.5 py-0.5 bg-primary/20 text-primary rounded text-xs">{t('default')}</span>}
         </div>
       )}

@@ -321,7 +321,6 @@ export interface OsUser {
   linked_tenant_id: number | null
   has_claude: boolean
   has_codex: boolean
-  has_openclaw: boolean
   is_process_owner: boolean
 }
 
@@ -393,10 +392,10 @@ interface MissionControlStore {
   dismissUpdate: (version: string) => void
 
   // OpenClaw update availability
-  openclawUpdate: { installed: string; latest: string; releaseUrl: string; releaseNotes: string; updateCommand: string } | null
-  openclawUpdateDismissedVersion: string | null
-  setOpenclawUpdate: (info: { installed: string; latest: string; releaseUrl: string; releaseNotes: string; updateCommand: string } | null) => void
-  dismissOpenclawUpdate: (version: string) => void
+  claudeCodeUpdate: { installed: string; latest: string; releaseUrl: string; releaseNotes: string; updateCommand: string } | null
+  claudeCodeUpdateDismissedVersion: string | null
+  setClaudeCodeUpdate: (info: { installed: string; latest: string; releaseUrl: string; releaseNotes: string; updateCommand: string } | null) => void
+  dismissClaudeCodeUpdate: (version: string) => void
 
   // OpenClaw Doctor banner dismiss (persisted with 24h expiry)
   doctorDismissedAt: number | null
@@ -632,15 +631,15 @@ export const useMissionControl = create<MissionControlStore>()(
     },
 
     // OpenClaw update availability
-    openclawUpdate: null,
-    openclawUpdateDismissedVersion: (() => {
+    claudeCodeUpdate: null,
+    claudeCodeUpdateDismissedVersion: (() => {
       if (typeof window === 'undefined') return null
-      try { return localStorage.getItem('mc-openclaw-update-dismissed') } catch { return null }
+      try { return localStorage.getItem('mc-claude-code-update-dismissed') } catch { return null }
     })(),
-    setOpenclawUpdate: (info) => set({ openclawUpdate: info }),
-    dismissOpenclawUpdate: (version) => {
-      try { localStorage.setItem('mc-openclaw-update-dismissed', version) } catch {}
-      set({ openclawUpdateDismissedVersion: version })
+    setClaudeCodeUpdate: (info) => set({ claudeCodeUpdate: info }),
+    dismissClaudeCodeUpdate: (version) => {
+      try { localStorage.setItem('mc-claude-code-update-dismissed', version) } catch {}
+      set({ claudeCodeUpdateDismissedVersion: version })
     },
 
     // OpenClaw Doctor banner dismiss

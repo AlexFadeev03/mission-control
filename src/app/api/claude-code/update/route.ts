@@ -18,7 +18,7 @@ export async function POST(request: Request) {
     if (match) installedBefore = match[1]
   } catch {
     return NextResponse.json(
-      { error: 'OpenClaw is not installed or not reachable' },
+      { error: 'Claude Code is not installed or not reachable' },
       { status: 400 }
     )
   }
@@ -28,25 +28,23 @@ export async function POST(request: Request) {
       timeoutMs: 5 * 60 * 1000,
     })
 
-    // Read new version after update
     let installedAfter: string | null = null
     try {
       const vResult = await runClaudeCode(['--version'], { timeoutMs: 3000 })
       const match = vResult.stdout.match(/(\d+\.\d+\.\d+)/)
       if (match) installedAfter = match[1]
-    } catch { /* keep null */ }
+    } catch {}
 
-    // Audit log
     try {
       const db = getDatabase()
       db.prepare(
         'INSERT INTO audit_log (action, actor, detail) VALUES (?, ?, ?)'
       ).run(
-        'openclaw.update',
+        'claude-code.update',
         auth.user.username,
         JSON.stringify({ previousVersion: installedBefore, newVersion: installedAfter })
       )
-    } catch { /* non-critical */ }
+    } catch {}
 
     return NextResponse.json({
       success: true,
@@ -59,12 +57,12 @@ export async function POST(request: Request) {
       err?.stderr?.toString?.()?.trim() ||
       err?.stdout?.toString?.()?.trim() ||
       err?.message ||
-      'Unknown error during OpenClaw update'
+      'Unknown error during Claude Code update'
 
-    logger.error({ err }, 'OpenClaw update failed')
+    logger.error({ err }, 'Claude Code update failed')
 
     return NextResponse.json(
-      { error: 'OpenClaw update failed', detail },
+      { error: 'Claude Code update failed', detail },
       { status: 500 }
     )
   }

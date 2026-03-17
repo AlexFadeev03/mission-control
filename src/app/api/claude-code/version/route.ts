@@ -1,8 +1,10 @@
 import { NextResponse } from 'next/server'
 import { runClaudeCode } from '@/lib/command'
 
-const GITHUB_RELEASES_URL =
-  'https://api.github.com/repos/openclaw/openclaw/releases/latest'
+const NPM_VERSION_URL =
+  'https://registry.npmjs.org/@anthropic-ai/claude-code/latest'
+const NPM_PACKAGE_URL =
+  'https://www.npmjs.com/package/@anthropic-ai/claude-code'
 
 function compareSemver(a: string, b: string): number {
   const pa = a.replace(/^v/, '').split('.').map(Number)
@@ -26,7 +28,6 @@ export async function GET() {
     const match = result.stdout.match(/(\d+\.\d+\.\d+)/)
     if (match) installed = match[1]
   } catch {
-    // OpenClaw not installed or not reachable
     return NextResponse.json(
       { installed: null, latest: null, updateAvailable: false },
       { headers }
@@ -41,8 +42,8 @@ export async function GET() {
   }
 
   try {
-    const res = await fetch(GITHUB_RELEASES_URL, {
-      headers: { Accept: 'application/vnd.github+json' },
+    const res = await fetch(NPM_VERSION_URL, {
+      headers: { Accept: 'application/json' },
       next: { revalidate: 3600 },
     })
 
@@ -54,23 +55,30 @@ export async function GET() {
     }
 
     const release = await res.json()
-    const latest = (release.tag_name ?? '').replace(/^v/, '')
-    const updateAvailable = compareSemver(latest, installed) > 0
+    const latest = String(release.version ?? '').replace(/^v/, '')
+    const updateAvailable = latest ? compareSemver(latest, installed) > 0 : false
 
     return NextResponse.json(
       {
         installed,
         latest,
         updateAvailable,
-        releaseUrl: release.html_url ?? '',
-        releaseNotes: release.body ?? '',
-        updateCommand: 'openclaw update --channel stable',
+        releaseUrl: NPM_PACKAGE_URL,
+        releaseNotes: '',
+        updateCommand: 'claude update --channel stable',
       },
       { headers }
     )
   } catch {
     return NextResponse.json(
-      { installed, latest: null, updateAvailable: false },
+      {
+        installed,
+        latest: null,
+        updateAvailable: false,
+        releaseUrl: NPM_PACKAGE_URL,
+        releaseNotes: '',
+        updateCommand: 'claude update --channel stable',
+      },
       { headers }
     )
   }

@@ -7,8 +7,8 @@ import { Button } from '@/components/ui/button'
 
 type UpdateState = 'idle' | 'updating' | 'success' | 'error'
 
-export function OpenClawUpdateBanner() {
-  const { openclawUpdate, openclawUpdateDismissedVersion, dismissOpenclawUpdate, setOpenclawUpdate } = useMissionControl()
+export function ClaudeCodeUpdateBanner() {
+  const { claudeCodeUpdate, claudeCodeUpdateDismissedVersion, dismissClaudeCodeUpdate, setClaudeCodeUpdate } = useMissionControl()
   const t = useTranslations('openclawUpdateBanner')
   const tc = useTranslations('common')
   const [copied, setCopied] = useState(false)
@@ -17,11 +17,12 @@ export function OpenClawUpdateBanner() {
   const [newVersion, setNewVersion] = useState<string | null>(null)
   const [showChangelog, setShowChangelog] = useState(false)
 
-  if (!openclawUpdate) return null
-  if (openclawUpdateDismissedVersion === openclawUpdate.latest) return null
+  if (!claudeCodeUpdate) return null
+  if (claudeCodeUpdateDismissedVersion === claudeCodeUpdate.latest) return null
+  const update = claudeCodeUpdate
 
   function handleCopy() {
-    navigator.clipboard.writeText(openclawUpdate!.updateCommand).then(() => {
+    navigator.clipboard.writeText(update.updateCommand).then(() => {
       setCopied(true)
       setTimeout(() => setCopied(false), 2000)
     }).catch(() => {})
@@ -32,7 +33,7 @@ export function OpenClawUpdateBanner() {
     setErrorMsg(null)
 
     try {
-      const res = await fetch('/api/openclaw/update', { method: 'POST' })
+      const res = await fetch('/api/claude-code/update', { method: 'POST' })
       const data = await res.json()
 
       if (!res.ok) {
@@ -44,7 +45,7 @@ export function OpenClawUpdateBanner() {
       setState('success')
       setNewVersion(data.newVersion)
       // Clear the banner after a few seconds
-      setTimeout(() => setOpenclawUpdate(null), 5000)
+      setTimeout(() => setClaudeCodeUpdate(null), 5000)
     } catch {
       setState('error')
       setErrorMsg(t('networkError'))
@@ -63,7 +64,7 @@ export function OpenClawUpdateBanner() {
           )}
           {state === 'success' && (
             <span className="font-medium text-emerald-300">
-              {t('openclawUpdated', { version: newVersion || openclawUpdate.latest })}
+              {t('openclawUpdated', { version: newVersion || update.latest })}
             </span>
           )}
           {state === 'error' && (
@@ -72,9 +73,9 @@ export function OpenClawUpdateBanner() {
           {state === 'idle' && (
             <>
               <span className="font-medium text-cyan-200">
-                {t('openclawUpdateAvailable', { version: openclawUpdate.latest })}
+                {t('openclawUpdateAvailable', { version: update.latest })}
               </span>
-              {' ('}{t('installed', { version: openclawUpdate.installed })}{')'}
+              {' ('}{t('installed', { version: update.installed })}{')'}
             </>
           )}
         </p>
@@ -86,7 +87,7 @@ export function OpenClawUpdateBanner() {
             >
               {tc('updateNow')}
             </button>
-            {openclawUpdate.releaseNotes && (
+            {update.releaseNotes && (
               <button
                 onClick={() => setShowChangelog(v => !v)}
                 className="shrink-0 text-2xs font-medium text-cyan-400 hover:text-cyan-300 px-2 py-1 rounded border border-cyan-500/20 hover:border-cyan-500/40 transition-colors"
@@ -101,7 +102,7 @@ export function OpenClawUpdateBanner() {
               {copied ? t('copied') : t('copyCommand')}
             </button>
             <a
-              href={openclawUpdate.releaseUrl}
+              href={update.releaseUrl}
               target="_blank"
               rel="noopener noreferrer"
               className="shrink-0 text-2xs font-medium text-cyan-400 hover:text-cyan-300 px-2 py-1 rounded border border-cyan-500/20 hover:border-cyan-500/40 transition-colors"
@@ -111,7 +112,7 @@ export function OpenClawUpdateBanner() {
             <Button
               variant="ghost"
               size="icon-xs"
-              onClick={() => dismissOpenclawUpdate(openclawUpdate.latest)}
+              onClick={() => dismissClaudeCodeUpdate(update.latest)}
               className="shrink-0 text-cyan-400/60 hover:text-cyan-300 hover:bg-transparent"
               title={tc('dismiss')}
             >
@@ -128,9 +129,9 @@ export function OpenClawUpdateBanner() {
           </svg>
         )}
       </div>
-      {showChangelog && openclawUpdate.releaseNotes && (
+      {showChangelog && update.releaseNotes && (
         <div className="mt-1 px-4 py-3 rounded-lg bg-cyan-500/5 border border-cyan-500/10 text-xs text-cyan-300/80 whitespace-pre-wrap max-h-64 overflow-y-auto">
-          {openclawUpdate.releaseNotes}
+          {update.releaseNotes}
         </div>
       )}
     </div>
