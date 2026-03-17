@@ -35,7 +35,7 @@ export interface ScanResult {
   categories: {
     credentials: Category
     network: Category
-    openclaw: Category
+    claudeCode: Category
     runtime: Category
     os: Category
   }
@@ -78,11 +78,11 @@ const INSECURE_PASSWORDS = new Set([
 export function runSecurityScan(): ScanResult {
   const credentials = scanCredentials()
   const network = scanNetwork()
-  const openclaw = scanOpenClaw()
+  const claudeCode = scanClaudeCode()
   const runtime = scanRuntime()
   const osLevel = scanOS()
 
-  const categories = { credentials, network, openclaw, runtime, os: osLevel }
+  const categories = { credentials, network, claudeCode, runtime, os: osLevel }
   const allChecks = Object.values(categories).flatMap(c => c.checks)
 
   const weightedMax = allChecks.reduce((s, c) => s + SEVERITY_WEIGHT[c.severity ?? 'medium'], 0)
@@ -260,17 +260,17 @@ function scanNetwork(): Category {
 // Category: OpenClaw
 // ---------------------------------------------------------------------------
 
-function scanOpenClaw(): Category {
+function scanClaudeCode(): Category {
   const checks: Check[] = []
-  const configPath = config.openclawConfigPath
+  const configPath = config.claudeCodeConfigPath
 
   if (!configPath || !existsSync(configPath)) {
     checks.push({
       id: 'config_found',
-      name: 'OpenClaw config found',
+      name: 'Claude Code config found',
       status: 'warn',
-      detail: 'openclaw.json not found — OpenClaw checks skipped',
-      fix: 'Set OPENCLAW_HOME or OPENCLAW_CONFIG_PATH in .env',
+      detail: 'claude-code.json not found — Claude Code checks skipped',
+      fix: 'Set CLAUDE_CODE_CONFIG_PATH in .env',
       severity: 'medium',
     })
     return scoreCategory(checks)
@@ -282,10 +282,10 @@ function scanOpenClaw(): Category {
   } catch (err) {
     checks.push({
       id: 'config_valid',
-      name: 'OpenClaw config valid',
+      name: 'Claude Code config valid',
       status: 'fail',
-      detail: 'openclaw.json could not be parsed',
-      fix: 'Check openclaw.json for syntax errors',
+      detail: 'claude-code.json could not be parsed',
+      fix: 'Check claude-code.json for syntax errors',
       severity: 'high',
     })
     return scoreCategory(checks)
@@ -298,7 +298,7 @@ function scanOpenClaw(): Category {
       id: 'config_permissions',
       name: 'Config file permissions',
       status: mode === '600' ? 'pass' : 'warn',
-      detail: `openclaw.json permissions are ${mode}`,
+      detail: `claude-code.json permissions are ${mode}`,
       fix: mode !== '600' ? `Run: chmod 600 ${configPath}` : '',
       severity: 'medium',
       fixSafety: 'safe',

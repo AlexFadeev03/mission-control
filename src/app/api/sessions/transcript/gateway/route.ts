@@ -5,7 +5,7 @@ import { requireRole } from '@/lib/auth'
 import { config } from '@/lib/config'
 import { logger } from '@/lib/logger'
 import { parseGatewayHistoryTranscript, parseJsonlTranscript } from '@/lib/transcript-parser'
-import { callOpenClawGateway } from '@/lib/openclaw-gateway'
+import { callClaudeCodeGateway } from '@/lib/claude-code-gateway'
 
 /**
  * GET /api/sessions/transcript/gateway?key=<session-key>&limit=50
@@ -29,14 +29,14 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ error: 'key is required' }, { status: 400 })
   }
 
-  const stateDir = config.openclawStateDir
+  const stateDir = config.claudeCodeStateDir
   if (!stateDir) {
     return NextResponse.json({ messages: [], source: 'gateway', error: 'OPENCLAW_STATE_DIR not configured' })
   }
 
   try {
     try {
-      const history = await callOpenClawGateway<{ messages?: unknown[] }>(
+      const history = await callClaudeCodeGateway<{ messages?: unknown[] }>(
         'chat.history',
         { sessionKey, limit },
         15000,

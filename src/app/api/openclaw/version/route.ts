@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server'
-import { runOpenClaw } from '@/lib/command'
+import { runClaudeCode } from '@/lib/command'
 
 const GITHUB_RELEASES_URL =
   'https://api.github.com/repos/openclaw/openclaw/releases/latest'
@@ -22,7 +22,7 @@ export async function GET() {
   let installed: string | null = null
 
   try {
-    const result = await runOpenClaw(['--version'], { timeoutMs: 3000 })
+    const result = await runClaudeCode(['--version'], { timeoutMs: 3000 })
     const match = result.stdout.match(/(\d+\.\d+\.\d+)/)
     if (match) installed = match[1]
   } catch {

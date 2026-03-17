@@ -289,7 +289,7 @@ const migrations: Migration[] = [
           linux_user TEXT NOT NULL UNIQUE,
           plan_tier TEXT NOT NULL DEFAULT 'standard',
           status TEXT NOT NULL DEFAULT 'pending',
-          openclaw_home TEXT NOT NULL,
+          claude_code_home TEXT NOT NULL,
           workspace_root TEXT NOT NULL,
           gateway_port INTEGER,
           dashboard_port INTEGER,
@@ -920,7 +920,7 @@ const migrations: Migration[] = [
         const linuxUser = (String(process.env.USER || 'local').trim().toLowerCase().replace(/[^a-z0-9_-]+/g, '-') || 'local').slice(0, 30)
         const home = String(process.env.HOME || '/tmp').trim() || '/tmp'
         const insert = db.prepare(`
-          INSERT INTO tenants (slug, display_name, linux_user, plan_tier, status, openclaw_home, workspace_root, config, created_by, owner_gateway)
+          INSERT INTO tenants (slug, display_name, linux_user, plan_tier, status, claude_code_home, workspace_root, config, created_by, owner_gateway)
           VALUES (?, ?, ?, 'standard', 'active', ?, ?, '{}', 'system', ?)
         `).run(
           slug,

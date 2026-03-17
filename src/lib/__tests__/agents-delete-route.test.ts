@@ -2,7 +2,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { NextRequest } from 'next/server'
 
 const requireRole = vi.fn()
-const runOpenClaw = vi.fn()
+const runClaudeCode = vi.fn()
 const removeAgentFromConfig = vi.fn()
 const prepare = vi.fn()
 
@@ -11,7 +11,7 @@ vi.mock('@/lib/auth', () => ({
 }))
 
 vi.mock('@/lib/command', () => ({
-  runOpenClaw,
+  runClaudeCode,
 }))
 
 vi.mock('@/lib/agent-sync', () => ({
@@ -46,7 +46,7 @@ describe('DELETE /api/agents/[id]', () => {
   beforeEach(() => {
     vi.resetModules()
     requireRole.mockReturnValue({ user: { id: 1, username: 'admin', role: 'admin', workspace_id: 1 } })
-    runOpenClaw.mockReset()
+    runClaudeCode.mockReset()
     removeAgentFromConfig.mockReset()
     prepare.mockReset()
   })
@@ -76,7 +76,7 @@ describe('DELETE /api/agents/[id]', () => {
     const body = await response.json()
 
     expect(response.status).toBe(200)
-    expect(runOpenClaw).not.toHaveBeenCalled()
+    expect(runClaudeCode).not.toHaveBeenCalled()
     expect(removeAgentFromConfig).toHaveBeenCalledWith({ id: 'neo', name: 'neo' })
     expect(deleteStmt.run).toHaveBeenCalledWith(7, 1)
     expect(body.success).toBe(true)
@@ -102,7 +102,7 @@ describe('DELETE /api/agents/[id]', () => {
     const response = await DELETE(request, { params: Promise.resolve({ id: '8' }) })
 
     expect(response.status).toBe(200)
-    expect(runOpenClaw).toHaveBeenCalledWith(['agents', 'delete', 'adam', '--force'], { timeoutMs: 30000 })
+    expect(runClaudeCode).toHaveBeenCalledWith(['agents', 'delete', 'adam', '--force'], { timeoutMs: 30000 })
     expect(removeAgentFromConfig).toHaveBeenCalledWith({ id: 'adam', name: 'adam' })
     expect(deleteStmt.run).toHaveBeenCalledWith(8, 1)
   })
@@ -116,7 +116,7 @@ describe('DELETE /api/agents/[id]', () => {
       if (sql.startsWith('DELETE FROM agents')) return deleteStmt
       throw new Error(`Unexpected SQL: ${sql}`)
     })
-    removeAgentFromConfig.mockRejectedValue(new Error('OPENCLAW_CONFIG_PATH not configured'))
+    removeAgentFromConfig.mockRejectedValue(new Error('CLAUDE_CODE_CONFIG_PATH not configured'))
 
     const { DELETE } = await import('@/app/api/agents/[id]/route')
     const request = new NextRequest('http://localhost/api/agents/9', {

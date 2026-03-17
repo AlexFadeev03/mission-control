@@ -1,6 +1,6 @@
 import { getDatabase, db_helpers } from './db'
-import { runOpenClaw } from './command'
-import { callOpenClawGateway } from './openclaw-gateway'
+import { runClaudeCode } from './command'
+import { callClaudeCodeGateway } from './claude-code-gateway'
 import { eventBus } from './event-bus'
 import { logger } from './logger'
 
@@ -77,12 +77,12 @@ function classifyTaskModel(task: DispatchableTask): string | null {
 }
 
 /** Extract the gateway agent identifier from the agent's config JSON.
- *  Falls back to agent_name (display name) if openclawId is not set. */
+ *  Falls back to agent_name (display name) if claudeCodeId is not set. */
 function resolveGatewayAgentId(task: DispatchableTask): string {
   if (task.agent_config) {
     try {
       const cfg = JSON.parse(task.agent_config)
-      if (typeof cfg.openclawId === 'string' && cfg.openclawId) return cfg.openclawId
+      if (typeof cfg.claudeCodeId === 'string' && cfg.claudeCodeId) return cfg.claudeCodeId
     } catch { /* ignore */ }
   }
   return task.agent_name
@@ -173,7 +173,7 @@ function resolveGatewayAgentIdForReview(task: ReviewableTask): string {
   if (task.agent_config) {
     try {
       const cfg = JSON.parse(task.agent_config)
-      if (typeof cfg.openclawId === 'string' && cfg.openclawId) return cfg.openclawId
+      if (typeof cfg.claudeCodeId === 'string' && cfg.claudeCodeId) return cfg.claudeCodeId
     } catch { /* ignore */ }
   }
   return task.assigned_to || 'jarv'
@@ -275,7 +275,7 @@ export async function runAegisReviews(): Promise<{ ok: boolean; message: string 
       // response payload (payloads[0].text). The two-step agent → agent.wait pattern
       // only returns lifecycle metadata (runId/status/timestamps) and never includes
       // the agent's actual text, so Aegis could never parse a verdict.
-      const finalResult = await runOpenClaw(
+      const finalResult = await runClaudeCode(
         ['gateway', 'call', 'agent', '--expect-final', '--timeout', '120000', '--params', JSON.stringify(invokeParams), '--json'],
         { timeoutMs: 125_000 }
       )
@@ -442,7 +442,7 @@ export async function dispatchAssignedTasks(): Promise<{ ok: boolean; message: s
       if (targetSession) {
         // Dispatch to a specific existing session via chat.send
         logger.info({ taskId: task.id, targetSession, agent: task.agent_name }, 'Dispatching task to targeted session')
-        const sendResult = await callOpenClawGateway<any>(
+        const sendResult = await callClaudeCodeGateway<any>(
           'chat.send',
           {
             sessionKey: targetSession,
@@ -478,7 +478,7 @@ export async function dispatchAssignedTasks(): Promise<{ ok: boolean; message: s
         // Use --expect-final to block until the agent completes and returns the full
         // response payload (result.payloads[0].text). The two-step agent → agent.wait
         // pattern only returns lifecycle metadata and never includes the agent's text.
-        const finalResult = await runOpenClaw(
+        const finalResult = await runClaudeCode(
           ['gateway', 'call', 'agent', '--expect-final', '--timeout', '120000', '--params', JSON.stringify(invokeParams), '--json'],
           { timeoutMs: 125_000 }
         )

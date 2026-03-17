@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getDatabase, Notification, db_helpers } from '@/lib/db';
-import { runOpenClaw } from '@/lib/command';
+import { runClaudeCode } from '@/lib/command';
 import { requireRole } from '@/lib/auth';
 import { logger } from '@/lib/logger';
 
@@ -87,7 +87,7 @@ export async function POST(request: NextRequest) {
               idempotencyKey: `notification-${notification.id}-${Date.now()}`,
               deliver: false,
             };
-            const { stdout, stderr } = await runOpenClaw(
+            const { stdout, stderr } = await runClaudeCode(
               [
                 'gateway',
                 'call',

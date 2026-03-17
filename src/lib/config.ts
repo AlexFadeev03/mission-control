@@ -27,40 +27,35 @@ const resolvedTokensPath = isBuildPhase
       path.join(resolvedDataDir, 'mission-control-tokens.json'))
   : (process.env.MISSION_CONTROL_TOKENS_PATH ||
       path.join(resolvedDataDir, 'mission-control-tokens.json'))
-const defaultOpenClawStateDir = path.join(os.homedir(), '.openclaw')
-const explicitOpenClawConfigPath =
-  process.env.OPENCLAW_CONFIG_PATH ||
-  process.env.MISSION_CONTROL_OPENCLAW_CONFIG_PATH ||
+const defaultClaudeCodeStateDir = path.join(os.homedir(), '.claude')
+const explicitClaudeCodeConfigPath =
+  process.env.CLAUDE_CODE_CONFIG_PATH ||
+  process.env.MISSION_CONTROL_CLAUDE_CODE_CONFIG_PATH ||
   ''
-const legacyOpenClawHome =
-  process.env.OPENCLAW_HOME ||
-  process.env.CLAWDBOT_HOME ||
-  process.env.MISSION_CONTROL_OPENCLAW_HOME ||
-  ''
-const openclawStateDir =
-  process.env.OPENCLAW_STATE_DIR ||
-  process.env.CLAWDBOT_STATE_DIR ||
-  legacyOpenClawHome ||
-  (explicitOpenClawConfigPath ? path.dirname(explicitOpenClawConfigPath) : defaultOpenClawStateDir)
-const openclawConfigPath =
-  explicitOpenClawConfigPath ||
-  path.join(openclawStateDir, 'openclaw.json')
-const openclawWorkspaceDir =
-  process.env.OPENCLAW_WORKSPACE_DIR ||
+const claudeCodeStateDir =
+  process.env.CLAUDE_CODE_STATE_DIR ||
+  (explicitClaudeCodeConfigPath
+    ? path.dirname(explicitClaudeCodeConfigPath)
+    : defaultClaudeCodeStateDir)
+const claudeCodeConfigPath =
+  explicitClaudeCodeConfigPath ||
+  path.join(claudeCodeStateDir, 'claude-code.json')
+const claudeCodeWorkspaceDir =
+  process.env.CLAUDE_CODE_WORKSPACE_DIR ||
   process.env.MISSION_CONTROL_WORKSPACE_DIR ||
-  (openclawStateDir ? path.join(openclawStateDir, 'workspace') : '')
+  (claudeCodeStateDir ? path.join(claudeCodeStateDir, 'workspace') : '')
 const defaultMemoryDir = (() => {
-  if (process.env.OPENCLAW_MEMORY_DIR) return process.env.OPENCLAW_MEMORY_DIR
-  // Prefer OpenClaw workspace memory context (daily notes + knowledge-base)
+  if (process.env.CLAUDE_CODE_MEMORY_DIR) return process.env.CLAUDE_CODE_MEMORY_DIR
+  // Prefer Claude Code workspace memory context (daily notes + knowledge-base)
   // when available; fallback to legacy sqlite memory path.
   if (
-    openclawWorkspaceDir &&
-    (fs.existsSync(path.join(openclawWorkspaceDir, 'memory')) ||
-      fs.existsSync(path.join(openclawWorkspaceDir, 'knowledge-base')))
+    claudeCodeWorkspaceDir &&
+    (fs.existsSync(path.join(claudeCodeWorkspaceDir, 'memory')) ||
+      fs.existsSync(path.join(claudeCodeWorkspaceDir, 'knowledge-base')))
   ) {
-    return openclawWorkspaceDir
+    return claudeCodeWorkspaceDir
   }
-  return (openclawStateDir ? path.join(openclawStateDir, 'memory') : '') || path.join(defaultDataDir, 'memory')
+  return (claudeCodeStateDir ? path.join(claudeCodeStateDir, 'memory') : '') || path.join(defaultDataDir, 'memory')
 })()
 
 const resolvedGnapRepoPath =
@@ -73,26 +68,22 @@ export const config = {
   dataDir: resolvedDataDir,
   dbPath: resolvedDbPath,
   tokensPath: resolvedTokensPath,
-  // Keep openclawHome as a legacy alias for existing code paths.
-  openclawHome: openclawStateDir,
-  openclawStateDir,
-  openclawConfigPath,
-  openclawBin: process.env.OPENCLAW_BIN || 'openclaw',
-  clawdbotBin: process.env.CLAWDBOT_BIN || 'clawdbot',
-  gatewayHost: process.env.OPENCLAW_GATEWAY_HOST || '127.0.0.1',
-  gatewayPort: clampInt(Number(process.env.OPENCLAW_GATEWAY_PORT || '18789'), 1, 65535, 18789),
+  claudeCodeStateDir,
+  claudeCodeConfigPath,
+  claudeCodeBin: process.env.CLAUDE_CODE_BIN || 'claude',
+  gatewayHost: process.env.CLAUDE_CODE_GATEWAY_HOST || '127.0.0.1',
+  gatewayPort: clampInt(Number(process.env.CLAUDE_CODE_GATEWAY_PORT || '18789'), 1, 65535, 18789),
   logsDir:
-    process.env.OPENCLAW_LOG_DIR ||
-    (openclawStateDir ? path.join(openclawStateDir, 'logs') : ''),
-  tempLogsDir: process.env.CLAWDBOT_TMP_LOG_DIR || '',
+    process.env.CLAUDE_CODE_LOG_DIR ||
+    (claudeCodeStateDir ? path.join(claudeCodeStateDir, 'logs') : ''),
   memoryDir: defaultMemoryDir,
   memoryAllowedPrefixes:
-    defaultMemoryDir === openclawWorkspaceDir
+    defaultMemoryDir === claudeCodeWorkspaceDir
       ? ['memory/', 'knowledge-base/']
       : [],
   soulTemplatesDir:
-    process.env.OPENCLAW_SOUL_TEMPLATES_DIR ||
-    (openclawStateDir ? path.join(openclawStateDir, 'templates', 'souls') : ''),
+    process.env.CLAUDE_CODE_SOUL_TEMPLATES_DIR ||
+    (claudeCodeStateDir ? path.join(claudeCodeStateDir, 'templates', 'souls') : ''),
   homeDir: os.homedir(),
   gnap: {
     enabled: process.env.GNAP_ENABLED === 'true',

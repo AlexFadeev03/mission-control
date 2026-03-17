@@ -1,12 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getDatabase, db_helpers, Message } from '@/lib/db'
-import { runOpenClaw } from '@/lib/command'
+import { runClaudeCode } from '@/lib/command'
 import { getAllGatewaySessions } from '@/lib/sessions'
 import { eventBus } from '@/lib/event-bus'
 import { requireRole } from '@/lib/auth'
 import { logger } from '@/lib/logger'
 import { scanForInjection, sanitizeForPrompt } from '@/lib/injection-guard'
-import { callOpenClawGateway } from '@/lib/openclaw-gateway'
+import { callClaudeCodeGateway } from '@/lib/claude-code-gateway'
 import { resolveCoordinatorDeliveryTarget } from '@/lib/coordinator-routing'
 
 type ForwardInfo = {
@@ -457,13 +457,13 @@ export async function POST(request: NextRequest) {
             (s) =>
               s.agent.toLowerCase() === String(to).toLowerCase() ||
               s.agent.toLowerCase() === coordinatorResolution.deliveryName.toLowerCase() ||
-              s.agent.toLowerCase() === String(coordinatorResolution.openclawAgentId || '').toLowerCase()
+              s.agent.toLowerCase() === String(coordinatorResolution.claudeCodeAgentId || '').toLowerCase()
           )
           sessionKey = match?.key || match?.sessionId || null
         }
 
-        // Prefer configured openclawId when present, fallback to normalized name
-        let openclawAgentId: string | null = coordinatorResolution.openclawAgentId
+        // Prefer configured claudeCodeId when present, fallback to normalized name
+        let openclawAgentId: string | null = coordinatorResolution.claudeCodeAgentId
 
         if (!sessionKey && !openclawAgentId) {
           forwardInfo.reason = 'no_active_session'
@@ -490,7 +490,7 @@ export async function POST(request: NextRequest) {
             const idempotencyKey = `mc-${messageId}-${Date.now()}`
 
             if (sessionKey) {
-              const acceptedPayload = await callOpenClawGateway<any>(
+              const acceptedPayload = await callClaudeCodeGateway<any>(
                 'chat.send',
                 {
                   sessionKey,
@@ -515,7 +515,7 @@ export async function POST(request: NextRequest) {
               }
               invokeParams.agentId = openclawAgentId
 
-              const invokeResult = await runOpenClaw(
+              const invokeResult = await runClaudeCode(
                 [
                   'gateway',
                   'call',
@@ -594,7 +594,7 @@ export async function POST(request: NextRequest) {
             // Best effort: wait briefly and surface completion/error feedback.
             if (forwardInfo.runId) {
               try {
-                const waitResult = await runOpenClaw(
+                const waitResult = await runClaudeCode(
                   [
                     'gateway',
                     'call',

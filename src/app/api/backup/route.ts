@@ -6,7 +6,7 @@ import { join, dirname } from 'path'
 import { readdirSync, statSync, unlinkSync } from 'fs'
 import { heavyLimiter } from '@/lib/rate-limit'
 import { logger } from '@/lib/logger'
-import { runOpenClaw } from '@/lib/command'
+import { runClaudeCode } from '@/lib/command'
 
 const BACKUP_DIR = join(dirname(config.dbPath), 'backups')
 const MAX_BACKUPS = 10
@@ -59,7 +59,7 @@ export async function POST(request: NextRequest) {
       let stdout: string
       let stderr: string
       try {
-        const result = await runOpenClaw(['backup', 'create', '--output', BACKUP_DIR], { timeoutMs: 60000 })
+        const result = await runClaudeCode(['backup', 'create', '--output', BACKUP_DIR], { timeoutMs: 60000 })
         stdout = result.stdout
         stderr = result.stderr
       } catch (error: any) {
@@ -77,7 +77,7 @@ export async function POST(request: NextRequest) {
       const output = (stdout || stderr).trim()
 
       logAuditEvent({
-        action: 'openclaw.backup',
+        action: 'claude-code.backup',
         actor: auth.user.username,
         actor_id: auth.user.id,
         detail: { output },

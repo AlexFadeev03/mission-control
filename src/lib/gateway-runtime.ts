@@ -2,7 +2,7 @@ import fs from 'node:fs'
 import { config } from '@/lib/config'
 import { logger } from '@/lib/logger'
 
-interface OpenClawGatewayConfig {
+interface ClaudeCodeGatewayConfig {
   gateway?: {
     auth?: {
       mode?: 'token' | 'password'
@@ -16,19 +16,19 @@ interface OpenClawGatewayConfig {
   }
 }
 
-function readOpenClawConfig(): OpenClawGatewayConfig | null {
-  const configPath = config.openclawConfigPath
+function readClaudeCodeConfig(): ClaudeCodeGatewayConfig | null {
+  const configPath = config.claudeCodeConfigPath
   if (!configPath || !fs.existsSync(configPath)) return null
   try {
     const raw = fs.readFileSync(configPath, 'utf8')
-    return JSON.parse(raw) as OpenClawGatewayConfig
+    return JSON.parse(raw) as ClaudeCodeGatewayConfig
   } catch {
     return null
   }
 }
 
 export function registerMcAsDashboard(mcUrl: string): { registered: boolean; alreadySet: boolean } {
-  const configPath = config.openclawConfigPath
+  const configPath = config.claudeCodeConfigPath
   if (!configPath || !fs.existsSync(configPath)) {
     return { registered: false, alreadySet: false }
   }
@@ -65,7 +65,7 @@ export function registerMcAsDashboard(mcUrl: string): { registered: boolean; alr
       logger.warn(
         { err, configPath },
         'Gateway config is read-only — skipping MC origin registration. ' +
-        'To enable auto-registration, mount openclaw.json with write access or ' +
+        'To enable auto-registration, mount claude-code.json with write access or ' +
         'add the MC origin to gateway.controlUi.allowedOrigins manually.',
       )
       return { registered: false, alreadySet: false }
@@ -77,17 +77,17 @@ export function registerMcAsDashboard(mcUrl: string): { registered: boolean; alr
 
 /**
  * Returns the gateway auth credential (token or password) for Bearer/WS auth.
- * Env overrides: OPENCLAW_GATEWAY_TOKEN, GATEWAY_TOKEN, OPENCLAW_GATEWAY_PASSWORD, GATEWAY_PASSWORD.
+ * Env overrides: CLAUDE_CODE_GATEWAY_TOKEN, GATEWAY_TOKEN, CLAUDE_CODE_GATEWAY_PASSWORD, GATEWAY_PASSWORD.
  * From config: uses gateway.auth.token when mode is "token", gateway.auth.password when mode is "password".
  */
 export function getDetectedGatewayToken(): string {
-  const envToken = (process.env.OPENCLAW_GATEWAY_TOKEN || process.env.GATEWAY_TOKEN || '').trim()
+  const envToken = (process.env.CLAUDE_CODE_GATEWAY_TOKEN || process.env.GATEWAY_TOKEN || '').trim()
   if (envToken) return envToken
   
-  const envPassword = (process.env.OPENCLAW_GATEWAY_PASSWORD || process.env.GATEWAY_PASSWORD || '').trim()
+  const envPassword = (process.env.CLAUDE_CODE_GATEWAY_PASSWORD || process.env.GATEWAY_PASSWORD || '').trim()
   if (envPassword) return envPassword
 
-  const parsed = readOpenClawConfig()
+  const parsed = readClaudeCodeConfig()
   const auth = parsed?.gateway?.auth
   const mode = auth?.mode === 'password' ? 'password' : 'token'
   const credential =
@@ -98,10 +98,10 @@ export function getDetectedGatewayToken(): string {
 }
 
 export function getDetectedGatewayPort(): number | null {
-  const envPort = Number(process.env.OPENCLAW_GATEWAY_PORT || process.env.GATEWAY_PORT || '')
+  const envPort = Number(process.env.CLAUDE_CODE_GATEWAY_PORT || process.env.GATEWAY_PORT || '')
   if (Number.isFinite(envPort) && envPort > 0) return envPort
 
-  const parsed = readOpenClawConfig()
+  const parsed = readClaudeCodeConfig()
   const cfgPort = Number(parsed?.gateway?.port || 0)
   return Number.isFinite(cfgPort) && cfgPort > 0 ? cfgPort : null
 }

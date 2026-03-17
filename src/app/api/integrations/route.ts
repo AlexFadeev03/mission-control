@@ -149,8 +149,8 @@ function serializeEnv(lines: EnvLine[]): string {
 }
 
 function getEnvPath(): string | null {
-  if (!config.openclawStateDir) return null
-  return join(config.openclawStateDir, '.env')
+  if (!config.claudeCodeStateDir) return null
+  return join(config.claudeCodeStateDir, '.env')
 }
 
 async function readEnvFile(): Promise<{ lines: EnvLine[]; raw: string } | null> {

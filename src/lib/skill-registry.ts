@@ -9,6 +9,7 @@ import { createHash } from 'node:crypto'
 import { mkdir, writeFile } from 'node:fs/promises'
 import { join } from 'node:path'
 import { homedir } from 'node:os'
+import { config } from './config'
 import { resolveWithin } from './paths'
 import { logger } from './logger'
 
@@ -381,13 +382,13 @@ function skillNameFromSlug(slug: string): string {
 function getTargetDir(targetRoot: string): string {
   const home = homedir()
   const cwd = process.cwd()
-  const openclawState = process.env.OPENCLAW_STATE_DIR || process.env.OPENCLAW_HOME || join(home, '.openclaw')
+  const claudeCodeState = config.claudeCodeStateDir || join(home, '.claude')
   const rootMap: Record<string, string> = {
     'user-agents': process.env.MC_SKILLS_USER_AGENTS_DIR || join(home, '.agents', 'skills'),
     'user-codex': process.env.MC_SKILLS_USER_CODEX_DIR || join(home, '.codex', 'skills'),
     'project-agents': process.env.MC_SKILLS_PROJECT_AGENTS_DIR || join(cwd, '.agents', 'skills'),
     'project-codex': process.env.MC_SKILLS_PROJECT_CODEX_DIR || join(cwd, '.codex', 'skills'),
-    'openclaw': process.env.MC_SKILLS_OPENCLAW_DIR || join(openclawState, 'skills'),
+    'claude-code': process.env.MC_SKILLS_CLAUDE_CODE_DIR || join(claudeCodeState, 'skills'),
   }
   const dir = rootMap[targetRoot]
   if (!dir) throw new Error(`Invalid target root: ${targetRoot}`)

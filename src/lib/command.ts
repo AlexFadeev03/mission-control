@@ -71,16 +71,9 @@ export function runCommand(
   })
 }
 
-export function runOpenClaw(args: string[], options: CommandOptions = {}) {
-  return runCommand(config.openclawBin, args, {
+export function runClaudeCode(args: string[], options: CommandOptions = {}) {
+  return runCommand(config.claudeCodeBin, args, {
     ...options,
-    cwd: options.cwd || config.openclawStateDir || process.cwd()
-  })
-}
-
-export function runClawdbot(args: string[], options: CommandOptions = {}) {
-  return runCommand(config.clawdbotBin, args, {
-    ...options,
-    cwd: options.cwd || config.openclawStateDir || process.cwd()
+    cwd: options.cwd || config.claudeCodeStateDir || process.cwd()
   })
 }

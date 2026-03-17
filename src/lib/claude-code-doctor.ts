@@ -1,11 +1,11 @@
 import path from 'node:path'
 
-export type OpenClawDoctorLevel = 'healthy' | 'warning' | 'error'
-export type OpenClawDoctorCategory = 'config' | 'state' | 'security' | 'general'
+export type ClaudeCodeDoctorLevel = 'healthy' | 'warning' | 'error'
+export type ClaudeCodeDoctorCategory = 'config' | 'state' | 'security' | 'general'
 
-export interface OpenClawDoctorStatus {
-  level: OpenClawDoctorLevel
-  category: OpenClawDoctorCategory
+export interface ClaudeCodeDoctorStatus {
+  level: ClaudeCodeDoctorLevel
+  category: ClaudeCodeDoctorCategory
   healthy: boolean
   summary: string
   issues: string[]
@@ -32,11 +32,11 @@ function isPositiveOrInstructionalLine(line: string): boolean {
 }
 
 function isDecorativeLine(line: string): boolean {
-  return /^[▄█▀░\s]+$/.test(line) || /openclaw doctor/i.test(line) || /🦞\s*openclaw\s*🦞/i.test(line)
+  return /^[▄█▀░\s]+$/.test(line) || /claude.?code doctor/i.test(line) || /🦞\s*claude.?code\s*🦞/i.test(line)
 }
 
 function isStateDirectoryListLine(line: string): boolean {
-  return /^(?:\$OPENCLAW_HOME(?:\/\.openclaw)?|~\/\.openclaw|\/\S+)$/.test(line)
+  return /^(?:\$CLAUDE_CODE_HOME(?:\/\.claude)?|~\/\.claude|\/\S+)$/.test(line)
 }
 
 function normalizeFsPath(candidate: string): string {
@@ -46,8 +46,8 @@ function normalizeFsPath(candidate: string): string {
 function normalizeDisplayedPath(candidate: string, stateDir: string): string {
   const trimmed = candidate.trim()
   if (!trimmed) return trimmed
-  if (trimmed === '~/.openclaw') return stateDir
-  if (trimmed === '$OPENCLAW_HOME' || trimmed === '$OPENCLAW_HOME/.openclaw') return stateDir
+  if (trimmed === '~/.claude') return stateDir
+  if (trimmed === '$CLAUDE_CODE_HOME' || trimmed === '$CLAUDE_CODE_HOME/.claude') return stateDir
   return trimmed
 }
 
@@ -77,7 +77,7 @@ function stripForeignStateDirectoryWarning(rawOutput: string, stateDir?: string)
         cursor += 1
         continue
       }
-      if (/^(active state dir:|[-*]\s+(?:\/|~\/|\$OPENCLAW_HOME)|\|)/i.test(nextNormalized)) {
+      if (/^(active state dir:|[-*]\s+(?:\/|~\/|\$CLAUDE_CODE_HOME)|\|)/i.test(nextNormalized)) {
         blockLines.push(nextLine)
         cursor += 1
         continue
@@ -105,7 +105,7 @@ function stripForeignStateDirectoryWarning(rawOutput: string, stateDir?: string)
   return kept.join('\n')
 }
 
-function detectCategory(raw: string, issues: string[]): OpenClawDoctorCategory {
+function detectCategory(raw: string, issues: string[]): ClaudeCodeDoctorCategory {
   const haystack = `${raw}\n${issues.join('\n')}`.toLowerCase()
 
   if (/invalid config|config invalid|unrecognized key|invalid option/.test(haystack)) {
@@ -123,11 +123,11 @@ function detectCategory(raw: string, issues: string[]): OpenClawDoctorCategory {
   return 'general'
 }
 
-export function parseOpenClawDoctorOutput(
+export function parseClaudeCodeDoctorOutput(
   rawOutput: string,
   exitCode = 0,
   options: { stateDir?: string } = {}
-): OpenClawDoctorStatus {
+): ClaudeCodeDoctorStatus {
   const raw = stripForeignStateDirectoryWarning(rawOutput.trim(), options.stateDir).trim()
   const lines = raw
     .split(/\r?\n/)
@@ -144,7 +144,7 @@ export function parseOpenClawDoctorOutput(
   const mentionsWarnings = /\bwarning|warnings|problem|problems|invalid config|fix\b/i.test(rawForWarningCheck)
   const mentionsHealthy = /\bok\b|\bhealthy\b|\bno issues\b|\bno\b.*\bwarnings?\s+detected\b|\bvalid\b/i.test(raw)
 
-  let level: OpenClawDoctorLevel = 'healthy'
+  let level: ClaudeCodeDoctorLevel = 'healthy'
   if (exitCode !== 0 || /invalid config|failed|error/i.test(raw)) {
     level = 'error'
   } else if (issues.length > 0 || mentionsWarnings) {
@@ -157,7 +157,7 @@ export function parseOpenClawDoctorOutput(
 
   const summary =
     level === 'healthy'
-      ? 'OpenClaw doctor reports a healthy configuration.'
+      ? 'Claude Code doctor reports a healthy configuration.'
       : issues[0] ||
         lines.find(line =>
           !/^run:/i.test(line) &&
@@ -165,9 +165,9 @@ export function parseOpenClawDoctorOutput(
           !isSessionAgingLine(line) &&
           !isDecorativeLine(line)
         ) ||
-        'OpenClaw doctor reported configuration issues.'
+        'Claude Code doctor reported configuration issues.'
 
-  const canFix = level !== 'healthy' || /openclaw doctor --fix/i.test(raw)
+  const canFix = level !== 'healthy' || /claude.?code doctor --fix/i.test(raw)
 
   return {
     level,

@@ -220,7 +220,7 @@ const TICK_MS = 60 * 1000 // Check every minute
 export function initScheduler() {
   if (tickInterval) return // Already running
 
-  // Auto-sync agents from openclaw.json on startup
+  // Auto-sync agents from claude-code.json on startup
   syncAgentsFromConfig('startup').catch(err => {
     logger.warn({ err }, 'Agent auto-sync failed')
   })
@@ -296,7 +296,7 @@ export function initScheduler() {
 
   tasks.set('gateway_agent_sync', {
     name: 'Gateway Agent Sync',
-    intervalMs: TICK_MS, // Every 60s — re-read openclaw.json
+    intervalMs: TICK_MS, // Every 60s — re-read claude-code.json
     lastRun: null,
     nextRun: now + 20_000, // First scan 20s after startup (after local sync)
     enabled: true,

@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { requireRole } from '@/lib/auth'
 import { config } from '@/lib/config'
 import { logger } from '@/lib/logger'
-import { callOpenClawGateway } from '@/lib/openclaw-gateway'
+import { callClaudeCodeGateway } from '@/lib/claude-code-gateway'
 
 const GATEWAY_TIMEOUT = 5000
 
@@ -37,7 +37,7 @@ export async function GET(request: NextRequest) {
       }
 
       try {
-        const data = await callOpenClawGateway<{ nodes?: unknown[] }>('node.list', {}, GATEWAY_TIMEOUT)
+        const data = await callClaudeCodeGateway<{ nodes?: unknown[] }>('node.list', {}, GATEWAY_TIMEOUT)
         return NextResponse.json({ nodes: data?.nodes ?? [], connected: true })
       } catch (rpcErr) {
         // Gateway is reachable but openclaw CLI unavailable (e.g. Docker) or
@@ -59,7 +59,7 @@ export async function GET(request: NextRequest) {
       }
 
       try {
-        const data = await callOpenClawGateway<{ devices?: unknown[] }>(
+        const data = await callClaudeCodeGateway<{ devices?: unknown[] }>(
           'device.pair.list',
           {},
           GATEWAY_TIMEOUT,
@@ -130,7 +130,7 @@ export async function POST(request: NextRequest) {
   }
 
   try {
-    const result = await callOpenClawGateway(spec.method, params, GATEWAY_TIMEOUT)
+    const result = await callClaudeCodeGateway(spec.method, params, GATEWAY_TIMEOUT)
     return NextResponse.json(result)
   } catch (err: unknown) {
     logger.error({ err }, 'Gateway device action failed')

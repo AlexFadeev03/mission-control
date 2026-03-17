@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server'
 import { requireRole } from '@/lib/auth'
-import { runOpenClaw } from '@/lib/command'
+import { runClaudeCode } from '@/lib/command'
 import { getDatabase } from '@/lib/db'
 import { logger } from '@/lib/logger'
 
@@ -13,7 +13,7 @@ export async function POST(request: Request) {
   let installedBefore: string | null = null
 
   try {
-    const vResult = await runOpenClaw(['--version'], { timeoutMs: 3000 })
+    const vResult = await runClaudeCode(['--version'], { timeoutMs: 3000 })
     const match = vResult.stdout.match(/(\d+\.\d+\.\d+)/)
     if (match) installedBefore = match[1]
   } catch {
@@ -24,14 +24,14 @@ export async function POST(request: Request) {
   }
 
   try {
-    const result = await runOpenClaw(['update', '--channel', 'stable'], {
+    const result = await runClaudeCode(['update', '--channel', 'stable'], {
       timeoutMs: 5 * 60 * 1000,
     })
 
     // Read new version after update
     let installedAfter: string | null = null
     try {
-      const vResult = await runOpenClaw(['--version'], { timeoutMs: 3000 })
+      const vResult = await runClaudeCode(['--version'], { timeoutMs: 3000 })
       const match = vResult.stdout.match(/(\d+\.\d+\.\d+)/)
       if (match) installedAfter = match[1]
     } catch { /* keep null */ }

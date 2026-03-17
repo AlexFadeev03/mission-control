@@ -4,7 +4,7 @@ import { existsSync, statSync } from 'node:fs'
 import { requireRole } from '@/lib/auth'
 import { config } from '@/lib/config'
 import { getDatabase } from '@/lib/db'
-import { runOpenClaw } from '@/lib/command'
+import { runClaudeCode } from '@/lib/command'
 import { logger } from '@/lib/logger'
 import { APP_VERSION } from '@/lib/version'
 
@@ -54,14 +54,14 @@ export async function GET(request: NextRequest) {
 }
 
 async function getVersionInfo() {
-  let openclaw: string | null = null
+  let claudeCode: string | null = null
   try {
-    const { stdout } = await runOpenClaw(['--version'], { timeoutMs: 3000 })
-    openclaw = stdout.trim()
+    const { stdout } = await runClaudeCode(['--version'], { timeoutMs: 3000 })
+    claudeCode = stdout.trim()
   } catch {
-    // openclaw not available
+    // claude not available
   }
-  return { app: APP_VERSION, openclaw }
+  return { app: APP_VERSION, claudeCode }
 }
 
 function getSecurityInfo() {

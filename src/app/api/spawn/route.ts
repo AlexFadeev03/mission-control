@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { requireRole } from '@/lib/auth'
-import { callOpenClawGateway } from '@/lib/openclaw-gateway'
+import { callClaudeCodeGateway } from '@/lib/claude-code-gateway'
 import { config } from '@/lib/config'
 import { readdir, readFile, stat } from 'fs/promises'
 import { join } from 'path'
@@ -11,7 +11,7 @@ import { scanForInjection } from '@/lib/injection-guard'
 import { logAuditEvent } from '@/lib/db'
 
 function getPreferredToolsProfile(): string {
-  return String(process.env.OPENCLAW_TOOLS_PROFILE || 'coding').trim() || 'coding'
+  return String(process.env.CLAUDE_CODE_TOOLS_PROFILE || 'coding').trim() || 'coding'
 }
 
 export async function POST(request: NextRequest) {
@@ -68,7 +68,7 @@ export async function POST(request: NextRequest) {
       let result: any
       let compatibilityFallbackUsed = false
       try {
-        result = await callOpenClawGateway('sessions_spawn', spawnPayload, 15_000)
+        result = await callClaudeCodeGateway('sessions_spawn', spawnPayload, 15_000)
       } catch (firstError: any) {
         const rawErr = String(firstError?.message || '').toLowerCase()
         const isToolsSchemaError =
@@ -78,7 +78,7 @@ export async function POST(request: NextRequest) {
 
         const fallbackPayload = { ...spawnPayload }
         delete (fallbackPayload as any).tools
-        result = await callOpenClawGateway('sessions_spawn', fallbackPayload, 15_000)
+        result = await callClaudeCodeGateway('sessions_spawn', fallbackPayload, 15_000)
         compatibilityFallbackUsed = true
       }
 

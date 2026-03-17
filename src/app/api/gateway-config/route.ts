@@ -8,7 +8,7 @@ import { mutationLimiter } from '@/lib/rate-limit'
 import { getDetectedGatewayToken } from '@/lib/gateway-runtime'
 
 function getConfigPath(): string | null {
-  return config.openclawConfigPath || null
+  return config.claudeCodeConfigPath || null
 }
 
 function gatewayUrl(path: string): string {

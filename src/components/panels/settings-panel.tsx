@@ -181,7 +181,7 @@ export function SettingsPanel() {
       fallback: 'fallback',
     }
 
-    const targetLabel = `${resolved.deliveryName}${resolved.openclawAgentId ? ` (${resolved.openclawAgentId})` : ''}`
+    const targetLabel = `${resolved.deliveryName}${resolved.claudeCodeAgentId ? ` (${resolved.claudeCodeAgentId})` : ''}`
     return `Resolves now to ${targetLabel} via ${viaLabel[resolved.resolvedBy] || resolved.resolvedBy}.`
   }, [coordinatorTargetAgents, coordinatorSessions])
 
